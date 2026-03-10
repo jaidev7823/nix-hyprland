@@ -1,7 +1,7 @@
 #!/bin/zsh
 
-killall -9 swaync
-killall -9 waybar
+pkill -9 swaync
+pkill -9 waybar
 
 swaync &
 waybar &
