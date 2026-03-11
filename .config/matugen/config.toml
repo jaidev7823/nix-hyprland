@@ -43,3 +43,7 @@ output_path = '~/.config/spicetify/Themes/text/color.ini'
 input_path = '~/.config/matugen/templates/midnight-discord.css'
 output_path = '~/.config/vesktop/themes/matugen.css'
 
+[templates.nvim]
+input_path = "~/.config/matugen/templates/nvim-colors.lua"
+output_path = "~/.config/nvim/lua/matugen/colors.lua"
+post_hook = "nvim --headless -c 'lua require(\"matugen.colors\")()' -c qa"
