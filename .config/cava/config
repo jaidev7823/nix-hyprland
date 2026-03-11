@@ -250,7 +250,7 @@
 gradient = 1
 gradient_count = 2
 gradient_color_1 = '#343a3b'
-gradient_color_2 = '#80d4dc'
+gradient_color_2 = '#81d3dd'
 
 [smoothing]
 
