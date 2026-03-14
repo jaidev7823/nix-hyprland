@@ -28,6 +28,8 @@
 	],
 
 "modules-center": [
+	"custom/albert",
+	"custom/separator#dot-line",
 	"group/app_drawer",
 	"custom/separator#dot-line",
 	"hyprland/workspaces#kanji",

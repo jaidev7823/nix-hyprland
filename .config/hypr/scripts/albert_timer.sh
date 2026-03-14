@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-export PATH=/run/current-system/sw/bin:/usr/bin:/bin
+export PATH="/run/current-system/sw/bin:/usr/bin:/bin:$PATH"
 set -euo pipefail
 
 SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
@@ -67,10 +67,14 @@ format_seconds() {
 prompt() {
   local message="$1"
   local value="${2:-}"
-  if has_cmd walker; then
+  local rofi_config="$HOME/.config/rofi/config.rasi"
+  
+  if has_cmd rofi; then
+    local rofi_args=("-dmenu" "-i" "-p" "$message")
+    [[ -f "$rofi_config" ]] && rofi_args+=("-config" "$rofi_config")
+    rofi "${rofi_args[@]}" -theme-str 'entry { placeholder: "Type here"; }' <<<"$value"
+  elif has_cmd walker; then
     walker -d -I -p "$message" <<<"$value"
-  elif has_cmd rofi; then
-    rofi -dmenu -i -p "$message" -theme-str 'entry { placeholder: "Type here"; }' <<<"$value"
   elif has_cmd zenity; then
     zenity --entry --title="Albert Wesker" --text="$message" --entry-text="$value"
   elif has_cmd kitty; then
@@ -111,7 +115,7 @@ play_sound_loop() {
 }
 
 stop_sound_loop() {
-  [[ -f "$LOCK_FILE" ]] && rm -f "$LOCK_FILE"
+  rm -f "$LOCK_FILE"
 }
 
 update_waste() {
