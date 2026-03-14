@@ -9,7 +9,6 @@ STATE_FILE="$STATE_DIR/state.json"
 LOCK_FILE="$STATE_DIR/sound.lock"
 LOG_FILE="$STATE_DIR/albert.log"
 DEFAULT_MINUTES=7
-QUOTE="Seven minutes is all I can spare to play with you."
 ALERT_SOUND="${ALBERT_TIMER_SOUND:-/run/current-system/sw/share/sounds/freedesktop/stereo/alarm-clock-elapsed.oga}"
 
 mkdir -p "$STATE_DIR"
@@ -36,6 +35,47 @@ EOF
 now_epoch() { date +%s; }
 now_iso() { date --iso-8601=seconds; }
 has_cmd() { command -v "$1" >/dev/null 2>&1; }
+
+spell_minutes() {
+  local minutes="$1"
+  case "$minutes" in
+  0) printf 'Zero' ;;
+  1) printf 'One' ;;
+  2) printf 'Two' ;;
+  3) printf 'Three' ;;
+  4) printf 'Four' ;;
+  5) printf 'Five' ;;
+  6) printf 'Six' ;;
+  7) printf 'Seven' ;;
+  8) printf 'Eight' ;;
+  9) printf 'Nine' ;;
+  10) printf 'Ten' ;;
+  11) printf 'Eleven' ;;
+  12) printf 'Twelve' ;;
+  13) printf 'Thirteen' ;;
+  14) printf 'Fourteen' ;;
+  15) printf 'Fifteen' ;;
+  16) printf 'Sixteen' ;;
+  17) printf 'Seventeen' ;;
+  18) printf 'Eighteen' ;;
+  19) printf 'Nineteen' ;;
+  20) printf 'Twenty' ;;
+  *) printf '%s' "$minutes" ;;
+  esac
+}
+
+build_quote() {
+  local minutes="$1"
+  local task="$2"
+  local minute_word unit
+  minute_word="$(spell_minutes "$minutes")"
+  if [[ "$minutes" == "1" ]]; then
+    unit='minute'
+  else
+    unit='minutes'
+  fi
+  printf '%s %s is all I can spare to play with %s.' "$minute_word" "$unit" "$task"
+}
 
 write_state() {
   local tmp
@@ -64,26 +104,65 @@ format_seconds() {
   fi
 }
 
-prompt() {
-  local message="$1"
-  local value="${2:-}"
-  
-  if has_cmd walker; then
-    # Walker -d -I is a dedicated dmenu-style input mode, perfect for text input.
-    walker -d -I -p "$message" <<<"$value"
-  elif has_cmd rofi; then
-    # For text input in rofi, we avoid the user's "launcher" config which might be selection-only.
-    rofi -dmenu -i -p "$message" -theme-str 'entry { placeholder: "Type here"; }' <<<"$value"
+terminal_form() {
+  local terminal="$1"
+  local prompt_file="$STATE_DIR/prompt.out"
+  local default_minutes_q prompt_q cmd
+
+  rm -f "$prompt_file"
+  printf -v default_minutes_q '%q' "$DEFAULT_MINUTES"
+  printf -v prompt_q '%q' "$prompt_file"
+  cmd="printf 'Task for this round: '; read -r task; printf 'Minutes to spare [%s]: ' $default_minutes_q; read -r minutes; if [[ -z \"\$minutes\" ]]; then minutes=$default_minutes_q; fi; printf '%s\n%s' \"\$task\" \"\$minutes\" > $prompt_q"
+
+  case "$terminal" in
+  kitty)
+    kitty --class albert-timer sh -lc "$cmd" >/dev/null 2>&1
+    ;;
+  footclient)
+    footclient sh -lc "$cmd" >/dev/null 2>&1
+    ;;
+  wezterm)
+    wezterm start --always-new-process sh -lc "$cmd" >/dev/null 2>&1
+    ;;
+  alacritty)
+    alacritty -e sh -lc "$cmd" >/dev/null 2>&1
+    ;;
+  *)
+    return 1
+    ;;
+  esac
+
+  [[ -f "$prompt_file" ]] || return 1
+  cat "$prompt_file"
+  rm -f "$prompt_file"
+}
+
+prompt_round() {
+  if has_cmd kitty; then
+    terminal_form kitty
+  elif has_cmd footclient; then
+    terminal_form footclient
+  elif has_cmd wezterm; then
+    terminal_form wezterm
+  elif has_cmd alacritty; then
+    terminal_form alacritty
   elif has_cmd zenity; then
-    zenity --entry --title="Albert Wesker" --text="$message" --entry-text="$value"
-  elif has_cmd kitty; then
-    # Fallback to a terminal input if no GUI tools are working/available.
-    kitty sh -lc "printf '%s' $(printf '%q' "$message: "); read -r answer; printf '%s' \"\$answer\" > $(printf '%q' "$STATE_DIR/prompt.out")" >/dev/null 2>&1
-    cat "$STATE_DIR/prompt.out"
-    rm -f "$STATE_DIR/prompt.out"
+    local task_input minutes_input
+    task_input="$(zenity --entry --title='Albert Wesker' --text='Task for this round')" || return 1
+    minutes_input="$(zenity --entry --title='Albert Wesker' --text='Minutes to spare' --entry-text="$DEFAULT_MINUTES")" || return 1
+    printf '%s\n%s' "$task_input" "$minutes_input"
+  elif has_cmd walker; then
+    local task_input minutes_input
+    task_input="$(walker -d -I -p 'Task for this round' <<<"")" || return 1
+    minutes_input="$(walker -d -I -p 'Minutes to spare' <<<"$DEFAULT_MINUTES")" || return 1
+    printf '%s\n%s' "$task_input" "$minutes_input"
+  elif has_cmd rofi; then
+    local task_input minutes_input
+    task_input="$(rofi -dmenu -i -p 'Task for this round' -theme-str 'entry { placeholder: "Type here"; }' <<<"")" || return 1
+    minutes_input="$(rofi -dmenu -i -p 'Minutes to spare' -theme-str 'entry { placeholder: "Type here"; }' <<<"$DEFAULT_MINUTES")" || return 1
+    printf '%s\n%s' "$task_input" "$minutes_input"
   else
-    # Last resort fallback.
-    printf '%s' "$value"
+    return 1
   fi
 }
 
@@ -135,7 +214,7 @@ update_waste() {
 render() {
   ensure_state
   update_waste
-  local now current text tooltip class progress remaining total task waste end_at
+  local now current text tooltip class progress remaining total task waste end_at quote
   now="$(now_epoch)"
   current="$(jq '.current' "$STATE_FILE")"
   waste="$(jq '.waste_seconds' "$STATE_FILE")"
@@ -144,6 +223,7 @@ render() {
     end_at="$(jq '.current.ends_at_epoch' "$STATE_FILE")"
     total="$(jq '.current.duration_seconds' "$STATE_FILE")"
     task="$(jq -r '.current.task' "$STATE_FILE")"
+    quote="$(jq -r '.current.quote' "$STATE_FILE")"
     remaining=$((end_at - now))
     if ((remaining <= 0)); then
       complete
@@ -151,11 +231,11 @@ render() {
     fi
     progress=$((((total - remaining) * 100) / total))
     text="󱎫 $(format_seconds "$remaining")"
-    tooltip="$QUOTE\nTask: $task\nProgress: ${progress}%\nWaste: $(format_seconds "$waste")"
+    tooltip="$quote\nTask: $task\nProgress: ${progress}%\nWaste: $(format_seconds "$waste")"
     class='["active"]'
   else
     text="󰔛 07:00"
-    tooltip="$QUOTE\nNo active task.\nWaste: $(format_seconds "$waste")\nClick to begin the next round."
+    tooltip="Click to begin the next round.\nWaste: $(format_seconds "$waste")"
     class='["idle"]'
   fi
 
@@ -166,20 +246,16 @@ start_timer() {
   ensure_state
   stop_sound_loop
 
-  local task_input minutes_input now end duration history_len id
+  local task_input minutes_input now end duration history_len id prompt_output quote
   log "start requested"
-  if ! task_input="$(prompt 'Task for this round' '')"; then
-    log "task prompt failed or cancelled"
+  if ! prompt_output="$(prompt_round)"; then
+    log "round prompt failed or cancelled"
     notify critical "Albert Wesker" "Task prompt did not open. Check Waybar environment or rofi availability."
     exit 1
   fi
+  task_input="$(printf '%s\n' "$prompt_output" | sed -n '1p')"
+  minutes_input="$(printf '%s\n' "$prompt_output" | sed -n '2p')"
   [[ -z "${task_input// /}" ]] && exit 0
-
-  if ! minutes_input="$(prompt 'Minutes to spare' "$DEFAULT_MINUTES")"; then
-    log "minutes prompt failed or cancelled"
-    notify critical "Albert Wesker" "Time prompt did not open."
-    exit 1
-  fi
   [[ -z "${minutes_input// /}" ]] && exit 0
   if ! [[ "$minutes_input" =~ ^[0-9]+$ ]] || ((minutes_input <= 0)); then
     notify critical "Albert Wesker" "That is not a valid number of minutes."
@@ -193,10 +269,11 @@ start_timer() {
   end=$((now + duration))
   history_len="$(jq '.history | length' "$STATE_FILE")"
   id=$((history_len + 1))
+  quote="$(build_quote "$minutes_input" "$task_input")"
 
-  json_set ".current = {id:$id, task:$(jq -Rn --arg v "$task_input" '$v'), duration_minutes:$minutes_input, duration_seconds:$duration, started_at:$(jq -Rn --arg v "$(now_iso)" '$v'), started_at_epoch:$now, ends_at_epoch:$end, quote:$(jq -Rn --arg v "$QUOTE" '$v')} | .last_idle_started_at = null"
+  json_set ".current = {id:$id, task:$(jq -Rn --arg v "$task_input" '$v'), duration_minutes:$minutes_input, duration_seconds:$duration, started_at:$(jq -Rn --arg v "$(now_iso)" '$v'), started_at_epoch:$now, ends_at_epoch:$end, quote:$(jq -Rn --arg v "$quote" '$v')} | .last_idle_started_at = null"
   log "timer started task=$task_input minutes=$minutes_input"
-  notify normal "Albert Wesker" "$QUOTE\nTask: $task_input\nTime: ${minutes_input} minutes"
+  notify normal "Albert Wesker" "$quote\nTask: $task_input\nTime: ${minutes_input} minutes"
 }
 
 complete() {
