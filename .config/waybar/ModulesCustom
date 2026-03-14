@@ -81,6 +81,15 @@
 	"on-click-right": "hyprlock"
 },
 
+"custom/albert": {
+	"exec": "$HOME/.config/hypr/scripts/albert_timer.sh render",
+	"return-type": "json",
+	"interval": 1,
+	"format": "{}",
+	"on-click": "$HOME/.config/hypr/scripts/albert_timer.sh start",
+	"tooltip": true
+},
+
 "custom/keyboard": {
 	"exec": "cat $HOME/.cache/kb_layout",
 	"interval": 1,
