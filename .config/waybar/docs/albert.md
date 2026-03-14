@@ -12,7 +12,7 @@ Implemented
 - Added script `.config/hypr/scripts/albert_timer.sh`.
 - Stores state in `.config/hypr/.local/albert-timer/state.json` by default.
 - Tracks `current`, `history`, `waste_seconds`, `last_idle_started_at`, and `last_completed_at`.
-- Uses `rofi` for prompts and `notify-send` for aggressive follow-up.
+- Uses `walker` first for prompts, then falls back to `rofi`, `zenity`, and `kitty`.
 
 JSON structure
 ```json

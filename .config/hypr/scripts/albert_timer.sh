@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 
+export PATH=/run/current-system/sw/bin:/usr/bin:/bin
 set -euo pipefail
 
 SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
@@ -14,12 +15,12 @@ ALERT_SOUND="${ALBERT_TIMER_SOUND:-/run/current-system/sw/share/sounds/freedeskt
 mkdir -p "$STATE_DIR"
 
 log() {
-  printf '%s %s\n' "$(date --iso-8601=seconds)" "$*" >> "$LOG_FILE"
+  printf '%s %s\n' "$(date --iso-8601=seconds)" "$*" >>"$LOG_FILE"
 }
 
 ensure_state() {
   if [[ ! -f "$STATE_FILE" ]]; then
-    cat > "$STATE_FILE" <<'EOF'
+    cat >"$STATE_FILE" <<'EOF'
 {
   "version": 1,
   "current": null,
@@ -39,7 +40,7 @@ has_cmd() { command -v "$1" >/dev/null 2>&1; }
 write_state() {
   local tmp
   tmp="$(mktemp)"
-  cat > "$tmp"
+  cat >"$tmp"
   mv "$tmp" "$STATE_FILE"
 }
 
@@ -47,16 +48,16 @@ json_set() {
   local filter="$1"
   local tmp
   tmp="$(mktemp)"
-  jq "$filter" "$STATE_FILE" > "$tmp"
+  jq "$filter" "$STATE_FILE" >"$tmp"
   mv "$tmp" "$STATE_FILE"
 }
 
 format_seconds() {
   local total="$1"
-  local h=$(( total / 3600 ))
-  local m=$(( (total % 3600) / 60 ))
-  local s=$(( total % 60 ))
-  if (( h > 0 )); then
+  local h=$((total / 3600))
+  local m=$(((total % 3600) / 60))
+  local s=$((total % 60))
+  if ((h > 0)); then
     printf '%02d:%02d:%02d' "$h" "$m" "$s"
   else
     printf '%02d:%02d' "$m" "$s"
@@ -66,8 +67,16 @@ format_seconds() {
 prompt() {
   local message="$1"
   local value="${2:-}"
-  if has_cmd rofi; then
+  if has_cmd walker; then
+    walker -d -I -p "$message" <<<"$value"
+  elif has_cmd rofi; then
     rofi -dmenu -i -p "$message" -theme-str 'entry { placeholder: "Type here"; }' <<<"$value"
+  elif has_cmd zenity; then
+    zenity --entry --title="Albert Wesker" --text="$message" --entry-text="$value"
+  elif has_cmd kitty; then
+    kitty sh -lc "printf '%s' $(printf '%q' "$message: "); read -r answer; printf '%s' \"\$answer\" > $(printf '%q' "$STATE_DIR/prompt.out")" >/dev/null 2>&1
+    cat "$STATE_DIR/prompt.out"
+    rm -f "$STATE_DIR/prompt.out"
   else
     printf '%s' "$value"
   fi
@@ -85,7 +94,7 @@ notify() {
 play_sound_loop() {
   [[ -f "$ALERT_SOUND" ]] || return
   (
-    echo $$ > "$LOCK_FILE"
+    echo $$ >"$LOCK_FILE"
     trap 'rm -f "$LOCK_FILE"' EXIT
     while [[ -f "$LOCK_FILE" ]]; do
       if has_cmd pw-play; then
@@ -111,8 +120,8 @@ update_waste() {
   current="$(jq '.current' "$STATE_FILE")"
   last_idle="$(jq -r '.last_idle_started_at // empty' "$STATE_FILE")"
   if [[ "$current" == "null" && -n "$last_idle" ]]; then
-    waste_add=$(( now - last_idle ))
-    if (( waste_add > 0 )); then
+    waste_add=$((now - last_idle))
+    if ((waste_add > 0)); then
       json_set ".waste_seconds += $waste_add | .last_idle_started_at = $now"
     fi
   fi
@@ -130,12 +139,12 @@ render() {
     end_at="$(jq '.current.ends_at_epoch' "$STATE_FILE")"
     total="$(jq '.current.duration_seconds' "$STATE_FILE")"
     task="$(jq -r '.current.task' "$STATE_FILE")"
-    remaining=$(( end_at - now ))
-    if (( remaining <= 0 )); then
+    remaining=$((end_at - now))
+    if ((remaining <= 0)); then
       complete
       exec "$0" render
     fi
-    progress=$(( ((total - remaining) * 100) / total ))
+    progress=$((((total - remaining) * 100) / total))
     text="󱎫 $(format_seconds "$remaining")"
     tooltip="$QUOTE\nTask: $task\nProgress: ${progress}%\nWaste: $(format_seconds "$waste")"
     class='["active"]'
@@ -159,15 +168,15 @@ start_timer() {
     notify critical "Albert Wesker" "Task prompt did not open. Check Waybar environment or rofi availability."
     exit 1
   fi
-  [[ -z "${task_input// }" ]] && exit 0
+  [[ -z "${task_input// /}" ]] && exit 0
 
   if ! minutes_input="$(prompt 'Minutes to spare' "$DEFAULT_MINUTES")"; then
     log "minutes prompt failed or cancelled"
     notify critical "Albert Wesker" "Time prompt did not open."
     exit 1
   fi
-  [[ -z "${minutes_input// }" ]] && exit 0
-  if ! [[ "$minutes_input" =~ ^[0-9]+$ ]] || (( minutes_input <= 0 )); then
+  [[ -z "${minutes_input// /}" ]] && exit 0
+  if ! [[ "$minutes_input" =~ ^[0-9]+$ ]] || ((minutes_input <= 0)); then
     notify critical "Albert Wesker" "That is not a valid number of minutes."
     exit 1
   fi
@@ -175,10 +184,10 @@ start_timer() {
   update_waste
 
   now="$(now_epoch)"
-  duration=$(( minutes_input * 60 ))
-  end=$(( now + duration ))
+  duration=$((minutes_input * 60))
+  end=$((now + duration))
   history_len="$(jq '.history | length' "$STATE_FILE")"
-  id=$(( history_len + 1 ))
+  id=$((history_len + 1))
 
   json_set ".current = {id:$id, task:$(jq -Rn --arg v "$task_input" '$v'), duration_minutes:$minutes_input, duration_seconds:$duration, started_at:$(jq -Rn --arg v "$(now_iso)" '$v'), started_at_epoch:$now, ends_at_epoch:$end, quote:$(jq -Rn --arg v "$QUOTE" '$v')} | .last_idle_started_at = null"
   log "timer started task=$task_input minutes=$minutes_input"
@@ -209,12 +218,12 @@ reset_state() {
 }
 
 case "${1:-render}" in
-  render) render ;;
-  start) start_timer ;;
-  complete) complete ;;
-  reset) reset_state ;;
-  *)
-    echo "Usage: $0 {render|start|complete|reset}" >&2
-    exit 1
-    ;;
+render) render ;;
+start) start_timer ;;
+complete) complete ;;
+reset) reset_state ;;
+*)
+  echo "Usage: $0 {render|start|complete|reset}" >&2
+  exit 1
+  ;;
 esac
