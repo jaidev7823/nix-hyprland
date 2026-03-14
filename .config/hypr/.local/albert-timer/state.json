@@ -1,6 +1,15 @@
 {
   "version": 1,
-  "current": null,
+  "current": {
+    "id": 1,
+    "task": "test",
+    "duration_minutes": 2,
+    "duration_seconds": 120,
+    "started_at": "2026-03-15T04:02:58+05:30",
+    "started_at_epoch": 1773527578,
+    "ends_at_epoch": 1773527698,
+    "quote": "Seven minutes is all I can spare to play with you."
+  },
   "history": [],
   "waste_seconds": 0,
   "last_idle_started_at": null,

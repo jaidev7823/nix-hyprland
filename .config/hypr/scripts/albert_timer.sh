@@ -67,21 +67,22 @@ format_seconds() {
 prompt() {
   local message="$1"
   local value="${2:-}"
-  local rofi_config="$HOME/.config/rofi/config.rasi"
   
-  if has_cmd rofi; then
-    local rofi_args=("-dmenu" "-i" "-p" "$message")
-    [[ -f "$rofi_config" ]] && rofi_args+=("-config" "$rofi_config")
-    rofi "${rofi_args[@]}" -theme-str 'entry { placeholder: "Type here"; }' <<<"$value"
-  elif has_cmd walker; then
+  if has_cmd walker; then
+    # Walker -d -I is a dedicated dmenu-style input mode, perfect for text input.
     walker -d -I -p "$message" <<<"$value"
+  elif has_cmd rofi; then
+    # For text input in rofi, we avoid the user's "launcher" config which might be selection-only.
+    rofi -dmenu -i -p "$message" -theme-str 'entry { placeholder: "Type here"; }' <<<"$value"
   elif has_cmd zenity; then
     zenity --entry --title="Albert Wesker" --text="$message" --entry-text="$value"
   elif has_cmd kitty; then
+    # Fallback to a terminal input if no GUI tools are working/available.
     kitty sh -lc "printf '%s' $(printf '%q' "$message: "); read -r answer; printf '%s' \"\$answer\" > $(printf '%q' "$STATE_DIR/prompt.out")" >/dev/null 2>&1
     cat "$STATE_DIR/prompt.out"
     rm -f "$STATE_DIR/prompt.out"
   else
+    # Last resort fallback.
     printf '%s' "$value"
   fi
 }
