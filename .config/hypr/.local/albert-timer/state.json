@@ -1,6 +1,15 @@
 {
   "version": 1,
-  "current": null,
+  "current": {
+    "id": 4,
+    "task": "test",
+    "duration_minutes": 1,
+    "duration_seconds": 60,
+    "started_at": "2026-03-15T16:00:40+05:30",
+    "started_at_epoch": 1773570640,
+    "ends_at_epoch": 1773570700,
+    "quote": "One minute is all I can spare to play with test."
+  },
   "history": [
     {
       "id": 1,
@@ -42,7 +51,7 @@
       "status": "completed"
     }
   ],
-  "waste_seconds": 2171,
-  "last_idle_started_at": 1773530109,
+  "waste_seconds": 42702,
+  "last_idle_started_at": null,
   "last_completed_at": 1773529949
 }
