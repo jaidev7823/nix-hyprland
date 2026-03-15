@@ -1,15 +1,6 @@
 {
   "version": 1,
-  "current": {
-    "id": 6,
-    "task": "test",
-    "duration_minutes": 1,
-    "duration_seconds": 60,
-    "started_at": "2026-03-15T17:01:15+05:30",
-    "started_at_epoch": 1773574275,
-    "ends_at_epoch": 1773574335,
-    "quote": "One minute is all I can spare to play with test."
-  },
+  "current": null,
   "history": [
     {
       "id": 1,
@@ -75,9 +66,22 @@
       "finished_at": "2026-03-15T17:01:04+05:30",
       "finished_at_epoch": 1773574264,
       "status": "completed"
+    },
+    {
+      "id": 6,
+      "task": "test",
+      "duration_minutes": 1,
+      "duration_seconds": 60,
+      "started_at": "2026-03-15T17:01:15+05:30",
+      "started_at_epoch": 1773574275,
+      "ends_at_epoch": 1773574335,
+      "quote": "One minute is all I can spare to play with test.",
+      "finished_at": "2026-03-15T17:02:15+05:30",
+      "finished_at_epoch": 1773574335,
+      "status": "completed"
     }
   ],
-  "waste_seconds": 44231,
-  "last_idle_started_at": null,
-  "last_completed_at": 1773574264
+  "waste_seconds": 44249,
+  "last_idle_started_at": 1773574353,
+  "last_completed_at": 1773574335
 }

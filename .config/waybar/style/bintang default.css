@@ -183,8 +183,6 @@ tooltip label{
 #custom-albert.active {
 	color: @primary;
 	font-weight: bold;
-	border-bottom: 2px solid @primary;
-	margin-top: 1px;
 }
 
 #custom-albert.idle {
