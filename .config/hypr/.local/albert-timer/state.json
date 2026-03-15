@@ -1,13 +1,13 @@
 {
   "version": 1,
   "current": {
-    "id": 4,
+    "id": 6,
     "task": "test",
     "duration_minutes": 1,
     "duration_seconds": 60,
-    "started_at": "2026-03-15T16:00:40+05:30",
-    "started_at_epoch": 1773570640,
-    "ends_at_epoch": 1773570700,
+    "started_at": "2026-03-15T17:01:15+05:30",
+    "started_at_epoch": 1773574275,
+    "ends_at_epoch": 1773574335,
     "quote": "One minute is all I can spare to play with test."
   },
   "history": [
@@ -49,9 +49,35 @@
       "finished_at": "2026-03-15T04:42:29+05:30",
       "finished_at_epoch": 1773529949,
       "status": "completed"
+    },
+    {
+      "id": 4,
+      "task": "test",
+      "duration_minutes": 1,
+      "duration_seconds": 60,
+      "started_at": "2026-03-15T16:00:40+05:30",
+      "started_at_epoch": 1773570640,
+      "ends_at_epoch": 1773570700,
+      "quote": "One minute is all I can spare to play with test.",
+      "finished_at": "2026-03-15T16:01:40+05:30",
+      "finished_at_epoch": 1773570700,
+      "status": "completed"
+    },
+    {
+      "id": 5,
+      "task": "test",
+      "duration_minutes": 1,
+      "duration_seconds": 60,
+      "started_at": "2026-03-15T16:26:58+05:30",
+      "started_at_epoch": 1773572218,
+      "ends_at_epoch": 1773572278,
+      "quote": "One minute is all I can spare to play with test.",
+      "finished_at": "2026-03-15T17:01:04+05:30",
+      "finished_at_epoch": 1773574264,
+      "status": "completed"
     }
   ],
-  "waste_seconds": 42702,
+  "waste_seconds": 44231,
   "last_idle_started_at": null,
-  "last_completed_at": 1773529949
+  "last_completed_at": 1773574264
 }

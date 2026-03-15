@@ -138,7 +138,6 @@ tooltip label{
 #custom-file_manager,
 #custom-keybinds,
 #custom-keyboard,
-#custom-albert,
 #custom-light_dark,
 #custom-lock,
 #custom-hint,
@@ -177,17 +176,19 @@ tooltip label{
 }
 
 #custom-albert {
-	padding-left: 14px;
-	padding-right: 14px;
+	padding-left: 8px;
+	padding-right: 8px;
 }
 
 #custom-albert.active {
-	color: @primary_fixed;
-	background-color: alpha(@primary_container, 0.85);
+	color: @primary;
+	font-weight: bold;
+	border-bottom: 2px solid @primary;
+	margin-top: 1px;
 }
 
 #custom-albert.idle {
-	color: @error;
+	color: @secondary;
 }
 
 #pulseaudio.muted {

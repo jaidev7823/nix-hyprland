@@ -9,7 +9,6 @@ STATE_FILE="$STATE_DIR/state.json"
 LOCK_FILE="$STATE_DIR/sound.lock"
 LOG_FILE="$STATE_DIR/albert.log"
 DEFAULT_MINUTES=7
-ALERT_SOUND="${ALBERT_TIMER_SOUND:-/run/current-system/sw/share/sounds/freedesktop/stereo/alarm-clock-elapsed.oga}"
 
 mkdir -p "$STATE_DIR"
 
@@ -175,25 +174,6 @@ notify() {
   fi
 }
 
-play_sound_loop() {
-  [[ -f "$ALERT_SOUND" ]] || return
-  (
-    echo $$ >"$LOCK_FILE"
-    trap 'rm -f "$LOCK_FILE"' EXIT
-    while [[ -f "$LOCK_FILE" ]]; do
-      if has_cmd pw-play; then
-        pw-play "$ALERT_SOUND" >/dev/null 2>&1 || true
-      elif has_cmd paplay; then
-        paplay "$ALERT_SOUND" >/dev/null 2>&1 || true
-      elif has_cmd ffplay; then
-        ffplay -nodisp -autoexit -loglevel quiet "$ALERT_SOUND" >/dev/null 2>&1 || true
-      else
-        sleep 2
-      fi
-    done
-  ) >/dev/null 2>&1 &
-}
-
 stop_sound_loop() {
   rm -f "$LOCK_FILE"
 }
@@ -288,7 +268,6 @@ complete() {
   payload="$(jq --arg finished_at "$(now_iso)" --argjson finished_epoch "$now" '.current + {finished_at:$finished_at, finished_at_epoch:$finished_epoch, status:"completed"}' "$STATE_FILE")"
   jq --argjson completed "$payload" --argjson now "$now" '.history += [$completed] | .current = null | .last_completed_at = $now | .last_idle_started_at = $now' "$STATE_FILE" | write_state
   log "timer completed"
-  play_sound_loop
   notify critical "Albert Wesker" "Time is up. Choose your next target now."
   start_timer || true
 }
