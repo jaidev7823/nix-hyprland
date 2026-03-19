@@ -22,4 +22,3 @@ window_padding_width 4
 
 include colors.conf
 
-map ctrl+shift+c copy_to_clipboard
