@@ -1,5 +1,4 @@
 #!/usr/bin/env bash
-
 export PATH="/run/current-system/sw/bin:/usr/bin:/bin:$PATH"
 set -euo pipefail
 
@@ -35,47 +34,11 @@ now_epoch() { date +%s; }
 now_iso() { date --iso-8601=seconds; }
 has_cmd() { command -v "$1" >/dev/null 2>&1; }
 
-spell_minutes() {
-  local minutes="$1"
-  case "$minutes" in
-  0) printf 'Zero' ;;
-  1) printf 'One' ;;
-  2) printf 'Two' ;;
-  3) printf 'Three' ;;
-  4) printf 'Four' ;;
-  5) printf 'Five' ;;
-  6) printf 'Six' ;;
-  7) printf 'Seven' ;;
-  8) printf 'Eight' ;;
-  9) printf 'Nine' ;;
-  10) printf 'Ten' ;;
-  11) printf 'Eleven' ;;
-  12) printf 'Twelve' ;;
-  13) printf 'Thirteen' ;;
-  14) printf 'Fourteen' ;;
-  15) printf 'Fifteen' ;;
-  16) printf 'Sixteen' ;;
-  17) printf 'Seventeen' ;;
-  18) printf 'Eighteen' ;;
-  19) printf 'Nineteen' ;;
-  20) printf 'Twenty' ;;
-  *) printf '%s' "$minutes" ;;
-  esac
-}
-
 build_quote() {
   local minutes="$1"
   local task="$2"
-  local minute_word unit
-  minute_word="$(spell_minutes "$minutes")"
-  if [[ "$minutes" == "1" ]]; then
-    unit='minute'
-  else
-    unit='minutes'
-  fi
-  printf '%s %s is all I can spare to play with %s.' "$minute_word" "$unit" "$task"
+  printf '%s minutes allocated for: %s.' "$minutes" "$task"
 }
-
 write_state() {
   local tmp
   tmp="$(mktemp)"
@@ -111,7 +74,13 @@ terminal_form() {
   rm -f "$prompt_file"
   printf -v default_minutes_q '%q' "$DEFAULT_MINUTES"
   printf -v prompt_q '%q' "$prompt_file"
-  cmd="printf 'Task for this round: '; read -r task; printf 'Minutes to spare [%s]: ' $default_minutes_q; read -r minutes; if [[ -z \"\$minutes\" ]]; then minutes=$default_minutes_q; fi; printf '%s\n%s' \"\$task\" \"\$minutes\" > $prompt_q"
+  cmd="printf 'Did you achieve last goal? '; read -r achieved;
+printf 'Why? '; read -r why;
+printf 'New task: '; read -r task;
+printf 'Strategy: '; read -r strategy;
+printf 'Time in minutes [%s]: ' $default_minutes_q; read -r minutes;
+if [[ -z \"\$minutes\" ]]; then minutes=$default_minutes_q; fi;
+printf '%s\n%s\n%s\n%s\n%s' \"\$achieved\" \"\$why\" \"\$task\" \"\$strategy\" \"\$minutes\" > $prompt_q"
 
   case "$terminal" in
   kitty)
@@ -211,7 +180,7 @@ render() {
     fi
     progress=$((((total - remaining) * 100) / total))
     text="󱎫 $(format_seconds "$remaining")"
-    tooltip="$quote\nTask: $task\nProgress: ${progress}%\nWaste: $(format_seconds "$waste")"
+    tooltip="$quote\nTask: $task\nStrategy: $(jq -r '.current.strategy' "$STATE_FILE")\nProgress: ${progress}%\nWaste: $(format_seconds "$waste")"
     class='["active"]'
   else
     text="󰔛 07:00"
@@ -233,8 +202,11 @@ start_timer() {
     notify critical "Albert Wesker" "Task prompt did not open. Check Waybar environment or rofi availability."
     exit 1
   fi
-  task_input="$(printf '%s\n' "$prompt_output" | sed -n '1p')"
-  minutes_input="$(printf '%s\n' "$prompt_output" | sed -n '2p')"
+  achieved="$(printf '%s\n' "$prompt_output" | sed -n '1p')"
+  why="$(printf '%s\n' "$prompt_output" | sed -n '2p')"
+  task_input="$(printf '%s\n' "$prompt_output" | sed -n '3p')"
+  strategy="$(printf '%s\n' "$prompt_output" | sed -n '4p')"
+  minutes_input="$(printf '%s\n' "$prompt_output" | sed -n '5p')"
   [[ -z "${task_input// /}" ]] && exit 0
   [[ -z "${minutes_input// /}" ]] && exit 0
   if ! [[ "$minutes_input" =~ ^[0-9]+$ ]] || ((minutes_input <= 0)); then
@@ -251,7 +223,19 @@ start_timer() {
   id=$((history_len + 1))
   quote="$(build_quote "$minutes_input" "$task_input")"
 
-  json_set ".current = {id:$id, task:$(jq -Rn --arg v "$task_input" '$v'), duration_minutes:$minutes_input, duration_seconds:$duration, started_at:$(jq -Rn --arg v "$(now_iso)" '$v'), started_at_epoch:$now, ends_at_epoch:$end, quote:$(jq -Rn --arg v "$quote" '$v')} | .last_idle_started_at = null"
+  json_set ".current = {
+    id:$id,
+    task:$(jq -Rn --arg v "$task_input" '$v'),
+    strategy:$(jq -Rn --arg v "$strategy" '$v'),
+    achieved_last:$(jq -Rn --arg v "$achieved" '$v'),
+    why:$(jq -Rn --arg v "$why" '$v'),
+    duration_minutes:$minutes_input,
+    duration_seconds:$duration,
+    started_at:$(jq -Rn --arg v "$(now_iso)" '$v'),
+    started_at_epoch:$now,
+    ends_at_epoch:$end,
+    quote:$(jq -Rn --arg v "$quote" '$v')
+  } | .last_idle_started_at = null"
   log "timer started task=$task_input minutes=$minutes_input"
   notify normal "Albert Wesker" "$quote\nTask: $task_input\nTime: ${minutes_input} minutes"
 }
