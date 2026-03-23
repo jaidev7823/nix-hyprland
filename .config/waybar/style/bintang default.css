@@ -163,7 +163,8 @@ tooltip label{
 #custom-weather.severe,
 #custom-weather.showyIcyDay,
 #custom-weather.snowyIcyNight,
-#custom-weather.sunnyDay {
+#custom-weather.sunnyDay,
+#custom-gammastep.activated {
 	padding-top: 4px;
 	padding-bottom: 4px;
 	padding-right: 6px;
@@ -228,3 +229,4 @@ tooltip label{
 	min-height: 10px;
 	border-radius: 5px;
 }
+

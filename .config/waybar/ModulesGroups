@@ -19,6 +19,7 @@
 		"custom/tty",
 		"custom/browser",
 		"custom/settings",
+    "custom/gammastep", 
 	]
 },
 "group/motherboard": {
@@ -41,7 +42,7 @@
         },
 	"modules": [
 		"temperature",		
-		"cpu",
+    "cpu",
 		"power-profiles-daemon",	
 		"memory",
 		"disk",
@@ -135,4 +136,5 @@
         "custom/reboot"
       ]
 },
+
 }

@@ -274,5 +274,15 @@
 "custom/arrow10": {
 	"format": "",
 	"tooltip": false
-}
+},
+"custom/gammastep": {
+    "format": "{icon}",
+    "format-icons": ["", ""],
+    "tooltip-format": "Gammastep Toggle",
+    "on-click": "pkill gammastep || gammastep & disown",
+    "return-type": "json",
+    "exec": "pgrep -x gammastep > /dev/null && echo '{\"text\": \"\", \"class\": \"activated\"}' || echo '{\"text\": \"\", \"class\": \"deactivated\"}'",
+    "interval": 5
+},
+
 }
