@@ -1,0 +1,4 @@
+pane	0	0	1	:*	0	nixos	:/home/jaidev	0	zsh	:
+pane	0	0	1	:*	1	nixos	:/home/jaidev/work/hypr-rice/.tmux	1	zsh	:
+window	0	0	:zsh	1	:*	629e,133x62,0,0[133x31,0,0,0,133x30,0,32,1]	:
+state	0	

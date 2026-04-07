@@ -1,0 +1,4 @@
+pane	0	0	1	:*	0	nixos	:/home/jaidev/work/projects/moggerman	1	nvim	:/nix/store/cyqhaxxc2ygqvvvdm8ybcx4im4qn0asf-neovim-unwrapped-0.11.6/bin/nvim --cmd lua vim.g.loaded_node_provider=0;vim.g.loaded_perl_provider=0;vim.g.loaded_python_provider=0;vim.g.loaded_python3_provider=0;vim.g.loaded_ruby_provider=0 .
+pane	0	0	1	:*	1	nixos	:/home/jaidev/work/projects/moggerman	0	zsh	:
+window	0	0	:nvim	1	:*	c9c8,270x62,0,0[270x31,0,0,1,270x30,0,32,2]	:
+state	0	
