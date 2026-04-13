@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 # === CONFIG ===
-WALLPAPER_DIR="$HOME/work/hypr-rice/wallpapers"
+WALLPAPER_DIR="$HOME/work/nix-hyprland/wallpapers"
 SYMLINK_PATH="$HOME/.config/hypr/current_wallpaper"
 
 # === WALLPAPER PICKER ===
@@ -21,7 +21,7 @@ mkdir -p "$(dirname "$SYMLINK_PATH")"
 ln -sf "$SELECTED_PATH" "$SYMLINK_PATH"
 
 # === SET WALLPAPER (Moved UP for instant visual feedback) ===
-swww img "$SELECTED_PATH" --transition-type any --transition-fps 60 &
+awww img "$SELECTED_PATH" --transition-type any --transition-fps 60 &
 
 # === RUN MATUGEN (Backgrounded and detached) ===
 # 'yes 1' sends an infinite stream of "1"s in case it asks multiple times.

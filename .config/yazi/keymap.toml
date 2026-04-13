@@ -1,4 +1,0 @@
-[mgr]
-prepend_keymap = [
-  { on = "o", run = "shell 'xdg-open \"$@\"'" , desc = "Open in file manager" }
-]
