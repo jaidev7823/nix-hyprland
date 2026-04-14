@@ -230,3 +230,30 @@ tooltip label{
 	border-radius: 5px;
 }
 
+/* Align GPU with other system modules */
+#custom-gpu, 
+#cpu, 
+#temperature {
+    padding-left: 8px;
+    padding-right: 8px;
+}
+
+/* Fix for the GPU looking "weird" - ensures it matches font and style */
+#custom-gpu {
+    color: @secondary;
+}
+
+/* Style for the vertical divider if you used the dot/line separator above */
+#custom-separator {
+    color: @outline;
+    opacity: 0.5;
+    padding-left: 2px;
+    padding-right: 2px;
+}
+
+/* This adds a slight gap between the fixed items and the drawer toggle */
+#group-mobo_drawer {
+    margin-left: 5px;
+    padding-left: 5px;
+    border-left: 1px solid rgba(255,255,255,0.2); /* Subtle line before drawer */
+}
